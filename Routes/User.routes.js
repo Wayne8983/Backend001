@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const {registerUser,allUsers, DeleteUser, login, FindUser} = require("../Controllers/User.controllers");
+const {registerUser,allUsers, DeleteUser, login, FindUser, userRefreshToken, logOut} = require("../Controllers/User.controllers");
 const verifyToken = require("../Middleware/authmiddleware");
 const authorizeRoles = require("../Middleware/isAdmin");
 
@@ -8,6 +8,8 @@ const authorizeRoles = require("../Middleware/isAdmin");
 
 router.post('/register',registerUser);
 router.get('/Users',allUsers);
+router.post("/refresh",userRefreshToken);
+router.delete("/logout",logOut);
 router.delete('/Delete',DeleteUser);
 router.post('/login',login);
 router.get('/finduser',FindUser);

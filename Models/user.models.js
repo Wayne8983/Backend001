@@ -30,6 +30,9 @@ const Userschema = new mongoose.Schema({
         enum:["User","admin"],
         default:"User",
         required:true
+    },
+    refreshToken:{
+        type:"string"
     }
 
 },

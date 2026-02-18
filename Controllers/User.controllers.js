@@ -3,7 +3,7 @@ const Users = require('../Models/user.models');
 const {HashPassword,confirmHash} = require('../Utils/hashpassword');
 const UserSchema = require('../Utils/joi');
 const jwt = require("jsonwebtoken");
-const generateToken = require('../Utils/generateToken');
+const {generateToken,refreshToken} = require('../Utils/generateToken');
 
 const allUsers = async(req,res)=>{
     const users = await Users.find({});
@@ -77,15 +77,91 @@ const login = async(req,res)=>{
             return res.json({message:"invalid Credentials"});
         }
         const token = await generateToken(user);
+        const refreshToken = jwt.sign(
+            {id:user._id,email:user.email,role:user.role},
+            process.env.refresh,
+            {expiresIn:"7d"}
+        );
+        
 
-        return res.json({token,message:"Login successful"});
+        user.refreshToken =refreshToken;
+        await user.save();
+
+        res.cookie("refreshToken",refreshToken,{
+            httpOnly:true,
+            secure:false,
+            sameSite:"strict",
+            maxAge:7*24*60*60*1000
+        });
+
+        res.status(200).json({
+            success:true,
+            message:"Login Successful",
+            token,
+            refreshToken
+        });
+
+
+
     }catch(err){
-        console.log(err.message);
+        res.status(500).json(
+            {
+                error:err.message
+            }
+
+        );
     }
+};
+
+const userRefreshToken = async(req,res)=>{
+    const token = req.cookies.refreshToken;
+    console.log(token);
+    if(!token){
+        return res.sendStatus(401);
+    }
+    try{
+        const decoded = jwt.verify(token,process.env.refresh);
+        const user = await Users.findById(decoded.id);
+        console.log(user);
+        if(!user || user.refreshToken !==token){
+            return res.sendStatus(403);
+        };
+
+        const newAccessToken = jwt.sign(
+            {id:user._id,role:user.role},
+            process.env.Secret_key,
+            {expiresIn:"15m"}
+        );
+        res.status(200).json({
+            newAccessToken
+        })
+
+    }catch(err){
+        res.json({
+            error:err.message
+        })
+    }
+};
+
+
+const logOut = async(req,res)=>{
+    const token = req.cookies.refreshToken;
+    if(token){
+        const user = await Users.findOne({refreshToken:token})
+        if(user){
+            user.refreshToken=null;
+            await user.save();
+        }
+
+    }
+    res.clearCookie("refreshToken");
+    res.status(200).json({
+        message:"logout successful"
+    });
 }
 
 
 
 
 
-module.exports = {registerUser,allUsers,DeleteUser,login,FindUser};
+module.exports = {registerUser,allUsers,DeleteUser,login,FindUser,userRefreshToken,logOut};

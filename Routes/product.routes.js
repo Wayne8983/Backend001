@@ -3,7 +3,7 @@ const { Products, addProducts, deleteProduct, updateProduct } = require("../Cont
 const verifyToken = require("../Middleware/authmiddleware");
 const router = express.Router();
 
-router.get('/allproducts',verifyToken,Products);
+router.get('/products',verifyToken,Products);
 router.post('/newproduct',addProducts);
 router.delete('/delete/:id',deleteProduct);
 router.patch('/update/:id',updateProduct);

@@ -5,12 +5,18 @@ port = 5000;
 const userRoutes = require("./Routes/User.routes");
 const ProductRoutes = require("./Routes/product.routes");
 const connectdb = require("./Config/db");
+const cookieParser = require("cookie-parser");
 
 connectdb();
+
+app.use(cookieParser());
+
 
 app.use(express.json());
 app.use('/',userRoutes);
 app.use('/',ProductRoutes);
+
+
 
 app.listen(port,()=>{
     console.log(`Server is running on port ${port}`);
